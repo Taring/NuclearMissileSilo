@@ -9,9 +9,9 @@
 std::map<int, int> G;
 void link(int x,int y)
 {
-    printf("%d changed to %d\n", x, y);
+    printf("G[%d] will change to %d\n", x, y);
     G[x] = y;
-    printf("Done?\n");
+    printf("G[%d] change to %d have done\n", x, y);
 }
 int check_circle(int x)
 {
@@ -21,7 +21,7 @@ int check_circle(int x)
 }
 void del(int x)
 {
-    printf("%d changed to 0\n", x);
+    printf("G[%d] changed to 0\n", x);
     G[x] = 0;
 }
 
@@ -39,6 +39,7 @@ int __mythread_check_thread__(pthread_t x)
 int mythread_mutex_init(mythread_mutex_t * mutex,const pthread_mutexattr_t * attr)
 {
     mutex->id = ++__mythread_num_of_nodes__;
+    printf("Show the mutex %d build\n", mutex->id);
     return pthread_mutex_init(&(mutex->my_mutex), attr);
 }
 
@@ -47,14 +48,15 @@ int mythread_mutex_destroy(mythread_mutex_t *mutex)
     return pthread_mutex_destroy(&(mutex->my_mutex));
 }
 
-int mythread_mutex_lock(mythread_mutex_t *mutex)
+int mythread_mutex_lock(mythread_mutex_t *mutex, int dx)
 {
-    int x = (int)__mythread_check_thread__(pthread_self());
-    printf("%d wants %d but %d\n", x, mutex->id, G[mutex->id]);
+    int x = __mythread_check_thread__(pthread_self());
+    printf("%d-%d wants %d but now is %d\n", dx, x, mutex->id, G[mutex->id]);
     if (G[mutex->id] == 0)
     {
+        int tmp = pthread_mutex_lock(&(mutex->my_mutex));
         link(mutex->id, x);
-        return pthread_mutex_lock(&(mutex->my_mutex));
+        return tmp;
     }
     else
     {
@@ -67,7 +69,7 @@ int mythread_mutex_lock(mythread_mutex_t *mutex)
         else
         {
             int ret = pthread_mutex_lock(&(mutex->my_mutex));
-            printf("Error %d\n", ret);
+            printf("Warning : Error %d on id %d\n", ret, mutex->id);
             del(x);
             if (ret == 0)
             {
